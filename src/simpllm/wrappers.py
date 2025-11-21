@@ -27,7 +27,7 @@ from simpllm.messages import (
     ToolCallBlock,
     MessageType,
 )
-from simpllm.utils import pydantic_to_function_declaration, get_logger
+from simpllm.utils import pydantic_to_function_declaration, get_logger, BaseTool
 
 logger = get_logger("LLM")
 
@@ -46,20 +46,20 @@ class ProviderWrapper[Client, Message, Response, ToolDeclaration](BaseModel, ABC
         ToolDeclaration: Provider's tool declaration type
 
     Note:
-        Tools should be Pydantic BaseModel subclasses with a __tool_name__ class attribute
+        Tools should be BaseTool subclasses with a __tool_name__ class attribute
         and an invoke() method. The wrapper uses these models for function calling.
     """
 
     provider: str
     model: str
     system_prompt: str
-    tools: list[type[BaseModel]] | None = None
+    tools: list[type[BaseTool]] | None = None
     output_schema: type[BaseModel] | None = None
     use_cache: bool = True  # Relevant to Anthropic only
 
     _client: Client = PrivateAttr()
     _tools_declarations: list[ToolDeclaration] | None = PrivateAttr(default=None)
-    _tools_map: dict[str, type[BaseModel]] | None = PrivateAttr(default=None)
+    _tools_map: dict[str, type[BaseTool]] | None = PrivateAttr(default=None)
 
     def model_post_init(self, context: Any) -> None:
         """Initialize client and tool declarations after model creation."""
@@ -76,8 +76,8 @@ class ProviderWrapper[Client, Message, Response, ToolDeclaration](BaseModel, ABC
 
     @staticmethod
     @abstractmethod
-    def to_native_tool_declaration(tool: type[BaseModel]) -> ToolDeclaration:
-        """Convert Pydantic model to provider's tool declaration format."""
+    def to_native_tool_declaration(tool: type[BaseTool]) -> ToolDeclaration:
+        """Convert BaseTool to provider's tool declaration format."""
         ...
 
     @abstractmethod
@@ -128,7 +128,7 @@ class ProviderWrapper[Client, Message, Response, ToolDeclaration](BaseModel, ABC
         return assistant_msg
 
     @property
-    def tools_map(self) -> dict[str, type[BaseModel]] | None:
+    def tools_map(self) -> dict[str, type[BaseTool]] | None:
         """Get mapping of tool names to tool classes."""
         return self._tools_map
 
@@ -166,8 +166,8 @@ class GeminiWrapper(
         return genai.Client()
 
     @staticmethod
-    def to_native_tool_declaration(tool: type[BaseModel]) -> google_types.FunctionDeclaration:
-        """Convert Pydantic model to Gemini function declaration."""
+    def to_native_tool_declaration(tool: type[BaseTool]) -> google_types.FunctionDeclaration:
+        """Convert BaseTool to Gemini function declaration."""
         return google_types.FunctionDeclaration.model_validate(pydantic_to_function_declaration(tool))
 
     # noinspection PyMethodMayBeStatic
@@ -327,8 +327,8 @@ class AnthropicWrapper(
         )
 
     @staticmethod
-    def to_native_tool_declaration(tool: type[BaseModel]) -> anthropic_types_beta.BetaToolParam:
-        """Convert Pydantic model to Anthropic tool declaration."""
+    def to_native_tool_declaration(tool: type[BaseTool]) -> anthropic_types_beta.BetaToolParam:
+        """Convert BaseTool to Anthropic tool declaration."""
         # noinspection PyTypeChecker
         return pydantic_to_function_declaration(tool, schema_key="input_schema")
 
