@@ -13,7 +13,7 @@ from anthropic.types import TextBlockParam
 from anthropic.types.beta import BetaMessageParam, BetaToolParam
 from google import genai
 from google.genai import types as google_types
-from pydantic import BaseModel, PrivateAttr, Field, Annotated
+from pydantic import BaseModel, PrivateAttr
 from tenacity import retry, wait_fixed, before_sleep_log, stop_after_attempt
 
 from simpllm.messages import (
