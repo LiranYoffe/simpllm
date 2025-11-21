@@ -37,7 +37,6 @@ from simpllm.types import ProviderWrapperType
 # Utilities
 from simpllm.utils import (
     BaseTool,
-    get_logger,
     pydantic_to_function_declaration,
     ToolDeclaration,
     ToolDeclarationAnthropic,
@@ -67,7 +66,6 @@ __all__ = [
     "ProviderWrapperType",
     # Utilities
     "BaseTool",
-    "get_logger",
     "pydantic_to_function_declaration",
     "ToolDeclaration",
     "ToolDeclarationAnthropic",

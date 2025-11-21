@@ -1,7 +1,5 @@
 """Utility functions for simpllm package."""
 
-import logging
-import sys
 from typing import Literal, Any, TypedDict, overload, Annotated
 
 import jsonref
@@ -48,24 +46,6 @@ class BaseTool(BaseModel):
             NotImplementedError: If not implemented by subclass
         """
         raise NotImplementedError
-
-
-def get_logger(name: str):
-    """
-    Sets up a Python logger to output messages at all logging levels
-    to the console using a detailed, explicit configuration.
-    """
-    logger = logging.getLogger(name)
-
-    # Prevent adding multiple handlers if the function is called multiple times
-    logger.handlers.clear()
-
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(logging.Formatter("%(asctime)s | %(name)s | %(levelname)s | %(message)s"))
-    logger.addHandler(console_handler)
-
-    logger.setLevel(logging.DEBUG)  # Logger processes all levels
-    return logger
 
 
 class GenerateJsonSchemaNoTitles(GenerateJsonSchema):

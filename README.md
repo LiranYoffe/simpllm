@@ -68,15 +68,14 @@ asyncio.run(main())
 
 ## Tool Calling
 
-Define tools as Pydantic models with a `__tool_name__` attribute:
+Define tools by inheriting from `BaseTool`:
 
 ```python
-from pydantic import BaseModel, Field
-from simpllm import AnthropicWrapper, UserMessage
+from pydantic import Field
+from simpllm import BaseTool, AnthropicWrapper, UserMessage
 
-class CalculatorTool(BaseModel):
+class CalculatorTool(BaseTool):
     """Perform basic arithmetic operations."""
-    __tool_name__ = "calculator"
 
     operation: str = Field(description="Operation: add, subtract, multiply, divide")
     a: float = Field(description="First number")
@@ -109,6 +108,14 @@ async def main():
         for tool_call in aggregated.tool_calls:
             print(f"Tool: {tool_call.name}")
             print(f"Args: {tool_call.args}")
+```
+
+**Note**: The `__tool_name__` class attribute is automatically set to the class name (`"CalculatorTool"`) by `BaseTool.__init_subclass__`. You can customize it:
+
+```python
+class CalculatorTool(BaseTool, tool_name="calculator"):
+    """Custom tool name example."""
+    # ... fields ...
 ```
 
 ## Message Management

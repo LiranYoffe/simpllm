@@ -27,9 +27,9 @@ from simpllm.messages import (
     ToolCallBlock,
     MessageType,
 )
-from simpllm.utils import pydantic_to_function_declaration, get_logger, BaseTool
+from simpllm.utils import pydantic_to_function_declaration, BaseTool
 
-logger = get_logger("LLM")
+logger = logging.getLogger("simpllm")
 
 
 class ProviderWrapper[Client, Message, Response, ToolDeclaration](BaseModel, ABC):
