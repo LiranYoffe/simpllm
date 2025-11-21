@@ -5,7 +5,7 @@ Provides a unified interface for interacting with multiple LLM providers
 with support for streaming, thinking/reasoning, tool calling, and prompt caching.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 # Message types and blocks
 from simpllm.messages import (
