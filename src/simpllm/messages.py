@@ -114,13 +114,6 @@ MessageType = Annotated[Union[UserMessage, AssistantMessage], Field(discriminato
 MessageRootModel = RootModel[MessageType]
 
 
-class TaskGroup(BaseModel):
-    """Group of tasks that can be executed in parallel or sequentially."""
-
-    tasks: list[Union[ToolCallBlock, "TaskGroup"]]
-    parallel: bool
-
-
 class AggregatedResponse(BaseModel):
     """Aggregated response with text, thoughts, tool calls, and usage."""
 

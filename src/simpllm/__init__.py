@@ -5,7 +5,7 @@ Provides a unified interface for interacting with multiple LLM providers
 with support for streaming, thinking/reasoning, tool calling, and prompt caching.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 # Message types and blocks
 from simpllm.messages import (
@@ -21,7 +21,6 @@ from simpllm.messages import (
     Usage,
     MessageType,
     MessageRootModel,
-    TaskGroup,
     AggregatedResponse,
 )
 
@@ -60,7 +59,6 @@ __all__ = [
     "Usage",
     "MessageType",
     "MessageRootModel",
-    "TaskGroup",
     "AggregatedResponse",
     # Wrappers
     "ProviderWrapper",
