@@ -160,7 +160,7 @@ A `.env` file is present in the project root (gitignored).
 - Triggers on version tags (e.g., `v0.1.3`)
 - Runs tests, builds package
 - Creates GitHub release with auto-generated notes
-- Publishes to PyPI (requires `PYPI_TOKEN` secret)
+- Publishes to PyPI using GitHub's trusted publisher (OIDC)
 
 ### Creating a Release
 
@@ -172,8 +172,9 @@ A `.env` file is present in the project root (gitignored).
 ### Required Secrets
 
 Configure these in GitHub repository settings → Secrets:
-- `PYPI_TOKEN`: PyPI API token for publishing (required for releases)
 - `GOOGLE_API_KEY`: Google API key for integration tests (optional)
+
+Note: PyPI publishing uses GitHub's trusted publisher feature (OIDC), so no PyPI token is needed.
 
 ## Testing Notes
 

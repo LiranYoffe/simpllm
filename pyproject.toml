@@ -4,13 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "py-simpllm"
-version = "0.1.2"
-description = "Simple LLM wrapper library for Anthropic Claude and Google Gemini"
+version = "0.1.3"
+description = "Simple LLM wrapper library"
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
-    {name = "Liran", email = "liran@example.com"},
+    {name = "Liran Yoffe", email = "liranyoffe@gmail.com"},
 ]
 keywords = ["llm", "anthropic", "claude", "gemini", "google", "ai", "wrapper"]
 classifiers = [
@@ -32,9 +33,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/simpllm"
-Repository = "https://github.com/yourusername/simpllm"
-Issues = "https://github.com/yourusername/simpllm/issues"
+Homepage = "https://github.com/LiranYoffe/simpllm"
+Repository = "https://github.com/LiranYoffe/simpllm"
+Issues = "https://github.com/LiranYoffe/simpllm/issues"
 
 [project.optional-dependencies]
 dev = [
