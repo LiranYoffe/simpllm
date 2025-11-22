@@ -15,7 +15,9 @@ A simple, unified Python library for interacting with multiple LLM providers (An
 ## Installation
 
 ```bash
-uv add simpllm
+uv add py-simpllm
+# or with pip
+pip install py-simpllm
 ```
 
 ## Quick Start
