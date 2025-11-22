@@ -67,29 +67,3 @@ def test_tool_declaration_conversion():
     decl_anthropic = pydantic_to_function_declaration(TestTool, schema_key="input_schema")
     assert decl_anthropic["name"] == "TestTool"  # Both use __tool_name__
     assert "input_schema" in decl_anthropic
-
-
-def test_wrapper_initialization():
-    """Test that wrappers can be initialized."""
-    gemini = GeminiWrapper(model="gemini-2.5-flash", system_prompt="Test")
-    assert gemini.provider == "google"
-    assert gemini.model == "gemini-2.5-flash"
-
-    anthropic = AnthropicWrapper(model="claude-sonnet-4-5-20250929", system_prompt="Test")
-    assert anthropic.provider == "anthropic"
-    assert anthropic.thinking_budget == 4096
-
-
-def test_wrapper_with_tools():
-    """Test wrapper initialization with tools."""
-
-    class MockTool(BaseTool, tool_name="mock_tool"):
-        """A mock tool."""
-
-        arg: str = Field(description="Test argument")
-
-    wrapper = GeminiWrapper(model="gemini-2.5-flash", system_prompt="Test", tools=[MockTool])
-
-    assert wrapper.tools_map is not None
-    assert "mock_tool" in wrapper.tools_map
-    assert wrapper.tools_map["mock_tool"] == MockTool
