@@ -1,18 +1,18 @@
 """Basic smoke tests for simpllm package."""
 
-import pytest
 from pydantic import Field
 
 from simpllm import (
-    UserMessage,
+    AnthropicWrapper,
     AssistantMessage,
-    UserTextBlock,
     AssistantTextBlock,
+    BaseTool,
+    GeminiWrapper,
     ThinkingBlock,
     Usage,
-    GeminiWrapper,
-    AnthropicWrapper,
-    pydantic_to_function_declaration, BaseTool,
+    UserMessage,
+    UserTextBlock,
+    pydantic_to_function_declaration,
 )
 
 

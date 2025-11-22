@@ -1,21 +1,18 @@
 """Integration tests that make actual API calls."""
 
 import os
+
 import pytest
 from pydantic import Field
 
 from simpllm import (
-    UserMessage,
-    GeminiWrapper,
     BaseTool,
+    GeminiWrapper,
+    UserMessage,
 )
-
 
 # Skip all tests in this file if GOOGLE_API_KEY is not set
-pytestmark = pytest.mark.skipif(
-    not os.environ.get("GOOGLE_API_KEY"),
-    reason="GOOGLE_API_KEY not set in environment"
-)
+pytestmark = pytest.mark.skipif(not os.environ.get("GOOGLE_API_KEY"), reason="GOOGLE_API_KEY not set in environment")
 
 
 @pytest.mark.asyncio

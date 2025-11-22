@@ -40,7 +40,46 @@ Issues = "https://github.com/yourusername/simpllm/issues"
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
+    "mypy>=1.8.0",
+    "ruff>=0.8.0",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/simpllm"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_generics = false
+exclude = [
+    "^.venv/",
+    "^tests/",
+]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

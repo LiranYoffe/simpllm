@@ -4,7 +4,7 @@ import asyncio
 import logging
 from abc import ABC, abstractmethod
 from os import environ
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import anthropic
 import anthropic.types as anthropic_types
@@ -14,21 +14,21 @@ from anthropic.types.beta import BetaMessageParam, BetaToolParam
 from google import genai
 from google.genai import types as google_types
 from pydantic import BaseModel, PrivateAttr
-from tenacity import retry, wait_fixed, before_sleep_log, stop_after_attempt
+from tenacity import before_sleep_log, retry, stop_after_attempt, wait_fixed
 
 from simpllm.messages import (
-    UserMessage,
     AssistantMessage,
-    Usage,
-    UserTextBlock,
-    ToolResultBlock,
     AssistantTextBlock,
+    MessageType,
     ThinkingBlock,
     ToolCallBlock,
-    MessageType,
+    ToolResultBlock,
+    Usage,
+    UserMessage,
+    UserTextBlock,
 )
-from simpllm.utils import pydantic_to_function_declaration
 from simpllm.tools import BaseTool
+from simpllm.utils import pydantic_to_function_declaration
 
 logger = logging.getLogger("simpllm")
 
@@ -158,9 +158,7 @@ class GeminiWrapper(
                 if self._tools_declarations
                 else None
             ),
-            thinking_config=google_types.ThinkingConfig(
-                include_thoughts=True, thinking_budget=self.thinking_budget
-            ),
+            thinking_config=google_types.ThinkingConfig(include_thoughts=True, thinking_budget=self.thinking_budget),
             response_mime_type="application/json" if self.output_schema else None,
             response_schema=self.output_schema,
         )
@@ -175,6 +173,7 @@ class GeminiWrapper(
     def native_response_to_usage(self, response: google_types.GenerateContentResponse) -> Usage:
         """Extract token usage from Gemini response."""
         usage_metadata = response.usage_metadata
+        assert usage_metadata is not None
         cached_content_token_count = usage_metadata.cached_content_token_count or 0
         prompt_token_count = usage_metadata.prompt_token_count or 0
         thoughts_token_count = usage_metadata.thoughts_token_count or 0
@@ -191,8 +190,10 @@ class GeminiWrapper(
     # noinspection PyMethodMayBeStatic
     def native_response_to_assistant_message(self, response: google_types.GenerateContentResponse) -> AssistantMessage:
         """Convert Gemini response to AssistantMessage."""
+        assert response.candidates is not None
         content = response.candidates[0].content
         assert content is not None
+        assert content.parts is not None
         blocks: list[AssistantTextBlock | ThinkingBlock | ToolCallBlock] = []
         tool_call_index = 0
         for native_block in content.parts:
@@ -202,11 +203,14 @@ class GeminiWrapper(
                 else:
                     blocks.append(AssistantTextBlock(text=native_block.text))
             elif native_block.function_call:
+                fc = native_block.function_call
+                assert fc.name is not None
+                assert fc.args is not None
                 blocks.append(
                     ToolCallBlock(
-                        call_id=native_block.function_call.id,
-                        name=native_block.function_call.name,
-                        args=native_block.function_call.args,
+                        call_id=fc.id,
+                        name=fc.name,
+                        args=fc.args,
                         index=tool_call_index,
                     )
                 )
@@ -228,8 +232,9 @@ class GeminiWrapper(
         response = await self._client.aio.models.count_tokens(
             model=self.model,
             contents=[self.system_prompt, *self.to_native_messages(messages)],  # Estimate
-            config=google_types.CountTokensConfig(tools=self._config.tools),
+            config=google_types.CountTokensConfig(tools=cast(list[google_types.Tool] | None, self._config.tools)),
         )
+        assert response.total_tokens is not None
         return response.total_tokens
 
     def to_native_messages(self, messages: list[MessageType]) -> list[google_types.Content]:
@@ -246,9 +251,7 @@ class GeminiWrapper(
                         response_key = "error" if user_block.is_error else "result"
                         response = {response_key: user_block.result}
                         native_parts.append(
-                            google_types.Part.from_function_response(
-                                name=user_block.tool_call.name, response=response
-                            )
+                            google_types.Part.from_function_response(name=user_block.tool_call.name, response=response)
                         )
                     else:
                         raise NotImplementedError
@@ -293,6 +296,7 @@ class GeminiWrapper(
             model=self.model, contents=self.to_native_messages(messages), config=self._config
         )
 
+        assert response.candidates is not None
         print("Finish Reason:", response.candidates[0].finish_reason)
 
         return response
@@ -330,8 +334,9 @@ class AnthropicWrapper(
     @staticmethod
     def to_native_tool_declaration(tool: type[BaseTool]) -> anthropic_types_beta.BetaToolParam:
         """Convert BaseTool to Anthropic tool declaration."""
-        # noinspection PyTypeChecker
-        return pydantic_to_function_declaration(tool, schema_key="input_schema")
+        result = pydantic_to_function_declaration(tool, schema_key="input_schema")
+        # noinspection PyInvalidCast
+        return cast(anthropic_types_beta.BetaToolParam, result)
 
     # noinspection PyMethodMayBeStatic
     def native_response_to_usage(self, response: anthropic_types_beta.BetaMessage) -> Usage:
@@ -354,7 +359,9 @@ class AnthropicWrapper(
             if native_block.type == "text":
                 blocks.append(AssistantTextBlock(text=native_block.text))
             elif native_block.type == "thinking":
-                blocks.append(ThinkingBlock(text=native_block.thinking, signature=native_block.signature.encode()))
+                sig = native_block.signature
+                assert sig is not None
+                blocks.append(ThinkingBlock(text=native_block.thinking, signature=sig.encode()))
             elif native_block.type == "tool_use":
                 assert isinstance(native_block.input, dict), f"args not a dict! Type: {type(native_block.input)}"
                 blocks.append(
@@ -372,16 +379,16 @@ class AnthropicWrapper(
 
     async def count_input_tokens(self, messages: list[MessageType]) -> int:
         """Count input tokens for Anthropic request."""
-        response = await self._client.messages.count_tokens(
+        response = await self._client.beta.messages.count_tokens(
             model=self.model,
             thinking=(
                 anthropic_types.ThinkingConfigEnabledParam(type="enabled", budget_tokens=self.thinking_budget)
                 if self.thinking_budget
-                else anthropic.NOT_GIVEN
+                else anthropic.omit
             ),
             system=self.system_prompt,
             messages=self.to_native_messages(messages),
-            tools=self._tools_declarations,
+            tools=self._tools_declarations or anthropic.omit
         )
         return response.input_tokens
 
@@ -396,8 +403,10 @@ class AnthropicWrapper(
                     if isinstance(user_block, UserTextBlock):
                         native_parts.append(anthropic_types_beta.BetaTextBlockParam(type="text", text=user_block.text))
                     elif isinstance(user_block, ToolResultBlock):
+                        call_id = user_block.tool_call.call_id
+                        assert call_id is not None
                         tool_result = anthropic_types_beta.BetaToolResultBlockParam(
-                            type="tool_result", tool_use_id=user_block.tool_call.call_id, content=user_block.result
+                            type="tool_result", tool_use_id=call_id, content=user_block.result
                         )
                         if user_block.is_error:
                             tool_result["is_error"] = True
@@ -414,18 +423,22 @@ class AnthropicWrapper(
                             anthropic_types_beta.BetaTextBlockParam(type="text", text=assistant_block.text)
                         )
                     elif isinstance(assistant_block, ThinkingBlock):
+                        sig = assistant_block.signature
+                        assert sig is not None
                         native_parts.append(
                             anthropic_types_beta.BetaThinkingBlockParam(
                                 type="thinking",
                                 thinking=assistant_block.text,
-                                signature=assistant_block.signature.decode(),
+                                signature=sig.decode(),
                             )
                         )
                     elif isinstance(assistant_block, ToolCallBlock):
+                        call_id = assistant_block.call_id
+                        assert call_id is not None
                         native_parts.append(
                             anthropic_types_beta.BetaToolUseBlockParam(
                                 type="tool_use",
-                                id=assistant_block.call_id,
+                                id=call_id,
                                 name=assistant_block.name,
                                 input=assistant_block.args,
                             )
@@ -480,7 +493,7 @@ class AnthropicWrapper(
 
         return tools_declarations, system_prompt, native_messages
 
-    async def generate_native_response(self, messages: list[MessageType]):
+    async def generate_native_response(self, messages: list[MessageType]) -> anthropic_types_beta.BetaMessage:
         """Generate response from Anthropic with streaming and prompt caching."""
         max_tokens = self.max_output_tokens
 

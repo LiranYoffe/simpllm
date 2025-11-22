@@ -1,9 +1,11 @@
 """Utility functions for simpllm package."""
 
-from typing import Literal, Any, TypedDict, overload
+from typing import Any, Literal, TypedDict, overload
 
-import jsonref
-from pydantic.json_schema import GenerateJsonSchema
+import jsonref  # type: ignore[import-untyped]
+from pydantic import ConfigDict
+from pydantic.json_schema import GenerateJsonSchema, JsonSchemaValue
+from pydantic_core import core_schema
 
 from simpllm.tools import BaseTool
 
@@ -11,12 +13,13 @@ from simpllm.tools import BaseTool
 class GenerateJsonSchemaNoTitles(GenerateJsonSchema):
     """JSON schema generator that omits titles."""
 
-    def field_title_should_be_set(self, _) -> bool:
+    def field_title_should_be_set(self, schema: core_schema.CoreSchema) -> bool:
         return False
 
-    def _update_class_schema(self, json_schema, cls, config) -> None:
+    def _update_class_schema(self, json_schema: JsonSchemaValue, cls: type[Any], config: ConfigDict) -> None:
         super()._update_class_schema(json_schema, cls, config)
-        json_schema.pop("title", None)
+        if isinstance(json_schema, dict):
+            json_schema.pop("title", None)
 
 
 class ToolDeclaration(TypedDict):
@@ -74,6 +77,9 @@ def pydantic_to_function_declaration(
 
     # Get tool name from __tool_name__ attribute (set by BaseTool.__init_subclass__)
     tool_name = tool.__tool_name__
+    description = str(schema.pop("description"))
 
-    # noinspection PyTypeChecker
-    return {"name": tool_name, "description": schema.pop("description"), schema_key: schema}
+    if schema_key == "parameters":
+        return ToolDeclaration(name=tool_name, description=description, parameters=schema)
+    else:
+        return ToolDeclarationAnthropic(name=tool_name, description=description, input_schema=schema)

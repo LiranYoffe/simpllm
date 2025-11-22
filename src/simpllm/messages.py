@@ -1,8 +1,9 @@
 """Message types and content blocks for LLM interactions."""
 
-from typing import Any, Union, Annotated, Literal, Self
+from collections.abc import Sequence
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, RootModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class UserTextBlock(BaseModel):
@@ -46,11 +47,9 @@ class ToolResultBlock(BaseModel):
     tool_call: ToolCallBlock
 
 
-UserContentBlockType = Annotated[Union[UserTextBlock, ToolResultBlock], Field(discriminator="type")]
+UserContentBlockType = Annotated[UserTextBlock | ToolResultBlock, Field(discriminator="type")]
 
-AssistantContentBlockType = Annotated[
-    Union[AssistantTextBlock, ThinkingBlock, ToolCallBlock], Field(discriminator="type")
-]
+AssistantContentBlockType = Annotated[AssistantTextBlock | ThinkingBlock | ToolCallBlock, Field(discriminator="type")]
 
 
 class UserMessage(BaseModel):
@@ -65,10 +64,10 @@ class UserMessage(BaseModel):
         return cls(content=[UserTextBlock(text=text)])
 
     @classmethod
-    def from_tool_results(cls, tool_results: list[ToolResultBlock]) -> Self:
+    def from_tool_results(cls, tool_results: Sequence[ToolResultBlock]) -> Self:
         """Create user message from tool results."""
         tool_results_sorted = sorted(tool_results, key=lambda tr: tr.tool_call.index)
-        return cls(content=tool_results_sorted)
+        return cls(content=list(tool_results_sorted))
 
 
 class Usage(BaseModel):
@@ -110,7 +109,7 @@ class AssistantMessage(BaseModel):
         )
 
 
-MessageType = Annotated[Union[UserMessage, AssistantMessage], Field(discriminator="role")]
+MessageType = Annotated[UserMessage | AssistantMessage, Field(discriminator="role")]
 MessageRootModel = RootModel[MessageType]
 
 

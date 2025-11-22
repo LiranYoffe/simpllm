@@ -8,24 +8,49 @@ simpllm is a unified Python library for interacting with multiple LLM providers 
 
 ## Development Commands
 
-### Running Tests
+The project includes a Makefile for common development tasks:
+
+### Setup
 ```bash
-uv run pytest tests/
+make install          # Install dependencies including dev tools
+```
+
+### Testing
+```bash
+make test             # Run all tests
+make test-unit        # Run only unit tests
+make test-integration # Run integration tests (requires GOOGLE_API_KEY)
 ```
 
 To run a specific test:
 ```bash
-uv run pytest tests/test_basic.py::test_user_message_from_text
+uv run pytest tests/test_basic.py::test_user_message_from_text -v
 ```
 
-### Installing Dependencies
+### Code Quality
 ```bash
-uv sync
+make lint             # Run ruff linter
+make format           # Format code with ruff
+make typecheck        # Run mypy type checker
+make check            # Run lint + typecheck + unit tests
 ```
 
-### Building the Package
+### Building and Publishing
 ```bash
-uv build
+make build            # Build distribution packages
+make clean            # Clean build artifacts
+make publish-test     # Publish to TestPyPI
+make publish          # Publish to PyPI (requires PYPI_TOKEN)
+```
+
+### Manual Commands
+```bash
+uv sync --extra dev   # Install dependencies
+uv run pytest tests/  # Run all tests
+uv run ruff check src/ tests/
+uv run ruff format src/ tests/
+uv run mypy src/
+uv build              # Build package
 ```
 
 ## Architecture
@@ -115,6 +140,40 @@ The library expects these environment variables:
 - `GOOGLE_API_KEY`: For Gemini models
 
 A `.env` file is present in the project root (gitignored).
+
+## CI/CD and Release Process
+
+### GitHub Actions Workflows
+
+**CI Workflow** (`.github/workflows/ci.yml`):
+- Runs on push to master/main and pull requests
+- Tests against Python 3.12 and 3.13
+- Runs linting (ruff), formatting checks, and type checking (mypy)
+- Executes unit tests on all commits
+- Runs integration tests on push (if `GOOGLE_API_KEY` secret is set)
+
+**Lint Workflow** (`.github/workflows/lint.yml`):
+- Runs on pull requests only
+- Fast feedback for code quality checks
+
+**Release Workflow** (`.github/workflows/release.yml`):
+- Triggers on version tags (e.g., `v0.1.3`)
+- Runs tests, builds package
+- Creates GitHub release with auto-generated notes
+- Publishes to PyPI (requires `PYPI_TOKEN` secret)
+
+### Creating a Release
+
+1. Update version in `pyproject.toml`
+2. Commit changes: `git commit -am "Bump version to X.Y.Z"`
+3. Create and push tag: `git tag vX.Y.Z && git push origin vX.Y.Z`
+4. GitHub Actions will automatically build and publish to PyPI
+
+### Required Secrets
+
+Configure these in GitHub repository settings → Secrets:
+- `PYPI_TOKEN`: PyPI API token for publishing (required for releases)
+- `GOOGLE_API_KEY`: Google API key for integration tests (optional)
 
 ## Testing Notes
 

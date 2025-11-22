@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel
 
 
@@ -22,7 +24,9 @@ class BaseTool[ContextType](BaseModel):
                 return f"Result: {result}"
     """
 
-    def __init_subclass__(cls, *, tool_name: str | None = None, **kwargs):
+    __tool_name__: str  # Set by __init_subclass__
+
+    def __init_subclass__(cls, *, tool_name: str | None = None, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
         cls.__tool_name__ = cls.__name__ if tool_name is None else tool_name
 
