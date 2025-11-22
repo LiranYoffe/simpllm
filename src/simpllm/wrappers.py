@@ -1,6 +1,7 @@
 """LLM provider wrapper implementations."""
 
 import asyncio
+import base64
 import logging
 from abc import ABC, abstractmethod
 from os import environ
@@ -199,7 +200,12 @@ class GeminiWrapper(
         for native_block in content.parts:
             if native_block.text:
                 if native_block.thought:
-                    blocks.append(ThinkingBlock(text=native_block.text, signature=native_block.thought_signature))
+                    sig = (
+                        base64.b64encode(native_block.thought_signature).decode()
+                        if native_block.thought_signature is not None
+                        else None
+                    )
+                    blocks.append(ThinkingBlock(text=native_block.text, signature=sig))
                 else:
                     blocks.append(AssistantTextBlock(text=native_block.text))
             elif native_block.function_call:
@@ -263,11 +269,16 @@ class GeminiWrapper(
                     if isinstance(assistant_block, AssistantTextBlock):
                         native_parts.append(google_types.Part.from_text(text=assistant_block.text))
                     elif isinstance(assistant_block, ThinkingBlock):
+                        sig = (
+                            base64.b64decode(assistant_block.signature)
+                            if assistant_block.signature is not None
+                            else None
+                        )
                         native_parts.append(
                             google_types.Part(
                                 text=assistant_block.text,
                                 thought=True,
-                                thought_signature=assistant_block.signature,
+                                thought_signature=sig,
                             )
                         )
                     elif isinstance(assistant_block, ToolCallBlock):
@@ -361,7 +372,7 @@ class AnthropicWrapper(
             elif native_block.type == "thinking":
                 sig = native_block.signature
                 assert sig is not None
-                blocks.append(ThinkingBlock(text=native_block.thinking, signature=sig.encode()))
+                blocks.append(ThinkingBlock(text=native_block.thinking, signature=sig))
             elif native_block.type == "tool_use":
                 assert isinstance(native_block.input, dict), f"args not a dict! Type: {type(native_block.input)}"
                 blocks.append(
@@ -429,7 +440,7 @@ class AnthropicWrapper(
                             anthropic_types_beta.BetaThinkingBlockParam(
                                 type="thinking",
                                 thinking=assistant_block.text,
-                                signature=sig.decode(),
+                                signature=sig,
                             )
                         )
                     elif isinstance(assistant_block, ToolCallBlock):

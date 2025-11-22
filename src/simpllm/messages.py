@@ -25,7 +25,7 @@ class ThinkingBlock(BaseModel):
 
     type: Literal["thinking"] = "thinking"
     text: str
-    signature: bytes | None
+    signature: str | None
 
 
 class ToolCallBlock(BaseModel):
