@@ -36,11 +36,11 @@ from simpllm.types import ProviderWrapperType
 
 # Utilities
 from simpllm.utils import (
-    BaseTool,
     pydantic_to_function_declaration,
     ToolDeclaration,
     ToolDeclarationAnthropic,
 )
+from simpllm.tools import BaseTool
 
 __all__ = [
     # Version

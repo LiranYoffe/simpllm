@@ -1,7 +1,7 @@
 """Basic smoke tests for simpllm package."""
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from simpllm import (
     UserMessage,
@@ -9,12 +9,10 @@ from simpllm import (
     UserTextBlock,
     AssistantTextBlock,
     ThinkingBlock,
-    ToolCallBlock,
-    ToolResultBlock,
     Usage,
     GeminiWrapper,
     AnthropicWrapper,
-    pydantic_to_function_declaration,
+    pydantic_to_function_declaration, BaseTool,
 )
 
 
@@ -53,22 +51,21 @@ def test_assistant_message_to_aggregated():
 def test_tool_declaration_conversion():
     """Test converting Pydantic model to tool declaration."""
 
-    class TestTool(BaseModel):
+    class TestTool(BaseTool):
         """A test tool."""
 
-        __tool_name__ = "test_tool"
         param1: str = Field(description="First parameter")
         param2: int = Field(description="Second parameter")
 
     # Gemini format
     decl = pydantic_to_function_declaration(TestTool, schema_key="parameters")
-    assert decl["name"] == "test_tool"
+    assert decl["name"] == "TestTool"
     assert decl["description"] == "A test tool."
     assert "parameters" in decl
 
     # Anthropic format
     decl_anthropic = pydantic_to_function_declaration(TestTool, schema_key="input_schema")
-    assert decl_anthropic["name"] == "test_tool"
+    assert decl_anthropic["name"] == "TestTool"  # Both use __tool_name__
     assert "input_schema" in decl_anthropic
 
 
@@ -86,10 +83,9 @@ def test_wrapper_initialization():
 def test_wrapper_with_tools():
     """Test wrapper initialization with tools."""
 
-    class MockTool(BaseModel):
+    class MockTool(BaseTool, tool_name="mock_tool"):
         """A mock tool."""
 
-        __tool_name__ = "mock_tool"
         arg: str = Field(description="Test argument")
 
     wrapper = GeminiWrapper(model="gemini-2.5-flash", system_prompt="Test", tools=[MockTool])

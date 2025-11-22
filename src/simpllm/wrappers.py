@@ -27,7 +27,8 @@ from simpllm.messages import (
     ToolCallBlock,
     MessageType,
 )
-from simpllm.utils import pydantic_to_function_declaration, BaseTool
+from simpllm.utils import pydantic_to_function_declaration
+from simpllm.tools import BaseTool
 
 logger = logging.getLogger("simpllm")
 
@@ -46,7 +47,7 @@ class ProviderWrapper[Client, Message, Response, ToolDeclaration](BaseModel, ABC
         ToolDeclaration: Provider's tool declaration type
 
     Note:
-        Tools should be BaseTool subclasses with a __tool_name__ class attribute
+        Tools should be BaseTool subclasses
         and an invoke() method. The wrapper uses these models for function calling.
     """
 
@@ -64,7 +65,7 @@ class ProviderWrapper[Client, Message, Response, ToolDeclaration](BaseModel, ABC
     def model_post_init(self, context: Any) -> None:
         """Initialize client and tool declarations after model creation."""
         if self.tools:
-            self._tools_map = {getattr(tool, "__tool_name__", tool.__name__): tool for tool in self.tools}
+            self._tools_map = {tool.__tool_name__: tool for tool in self.tools}
             self._tools_declarations = list(map(self.to_native_tool_declaration, self.tools))
 
         self._client = self.setup_client()

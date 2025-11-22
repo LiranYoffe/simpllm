@@ -171,7 +171,7 @@ wrapper = AnthropicWrapper(
 wrapper = GeminiWrapper(
     model="gemini-2.5-flash",
     system_prompt="Your system prompt",
-    thinking_budget=1000,           # Thinking tokens budget (-1 for unlimited)
+    thinking_budget=1000,           # Thinking tokens budget (-1 is default)
 )
 ```
 
@@ -245,3 +245,4 @@ MIT License - see LICENSE file for details.
 ## Contributing
 
 Contributions welcome! Please open an issue or PR on GitHub.
+
