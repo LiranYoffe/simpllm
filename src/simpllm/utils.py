@@ -40,18 +40,18 @@ class ToolDeclarationAnthropic(TypedDict):
 
 @overload
 def pydantic_to_function_declaration(
-        tool: type[BaseTool], schema_key: Literal["parameters"] = ...
+    tool: type[BaseTool], schema_key: Literal["parameters"] = ...
 ) -> ToolDeclaration: ...
 
 
 @overload
 def pydantic_to_function_declaration(
-        tool: type[BaseTool], schema_key: Literal["input_schema"] = ...
+    tool: type[BaseTool], schema_key: Literal["input_schema"] = ...
 ) -> ToolDeclarationAnthropic: ...
 
 
 def pydantic_to_function_declaration(
-        tool: type[BaseTool], schema_key: Literal["parameters", "input_schema"] = "parameters"
+    tool: type[BaseTool], schema_key: Literal["parameters", "input_schema"] = "parameters"
 ) -> ToolDeclaration | ToolDeclarationAnthropic:
     """
     Convert BaseTool subclass to LLM function declaration.

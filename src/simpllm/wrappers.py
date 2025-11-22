@@ -388,7 +388,7 @@ class AnthropicWrapper(
             ),
             system=self.system_prompt,
             messages=self.to_native_messages(messages),
-            tools=self._tools_declarations or anthropic.omit
+            tools=self._tools_declarations or anthropic.omit,
         )
         return response.input_tokens
 
